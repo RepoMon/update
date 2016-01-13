@@ -1,0 +1,29 @@
+{
+    "name": "RepoMon/update",
+    "description": "Dependency updating service",
+    "authors": [
+        {
+            "name": "Tim Rodger",
+            "email": "tim.rodger@gmail.com"
+        }
+    ],
+
+    "require" : {
+      "silex/silex": "1.3",
+      "monolog/monolog": "~1.15",
+      "videlalvaro/php-amqplib": "2.6.*",
+      "phpunit/phpunit": "5.1.*"
+    },
+
+    "config": {
+        "bin-dir": "bin"
+    },
+
+    "minimum-stability": "dev",
+
+    "autoload": {
+      "psr-0": {
+        "Ace": ""
+      }
+    }
+}
