@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+src/vendor
+src/bin/phpunit
+.idea
+tmp
+*.csv
+*.txt
+*.config
