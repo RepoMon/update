@@ -282,7 +282,7 @@ class Repository
 
         foreach($files as $file){
             if ($name === $file->getFileName()){
-                return $file->getPath();
+                return $file->getPathInfo()->getRealPath();
             }
         }
     }
