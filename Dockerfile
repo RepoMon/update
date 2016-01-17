@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM php:latest
 
 MAINTAINER Tim Rodger <tim.rodger@gmail.com>
 
@@ -18,23 +18,23 @@ RUN curl -sS https://getcomposer.org/installer | php \
 
 CMD ["/home/app/run.sh"]
 
+RUN git config --global user.email "bot@repo-mon.com"
+RUN git config --global user.name "Repository monitor"
+
+# create the directory to store the checked out repositories
+RUN mkdir /tmp/repositories
+
 # Move application files into place
 COPY src/ /home/app/
 
 # remove any development cruft
 RUN rm -rf /home/app/vendor/*
 
-# create the directory to store the checked out repositories
-RUN mkdir /tmp/repositories
-
 WORKDIR /home/app
 
 # Install dependencies
 RUN composer install --prefer-dist && \
     apt-get clean
-
-RUN git config --global user.email "bot@repo-mon.com"
-RUN git config --global user.name "Repository monitor"
 
 RUN chmod +x /home/app/run.sh
 

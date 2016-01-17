@@ -113,10 +113,13 @@ class Repository
     {
         // cd to dir
         chdir($this->directory);
+        var_dump(__METHOD__);
 
         // check if local repo exists
         if (!$this->isCheckedOut()) {
+            var_dump('cloning ' . $this->generateUrl() . ' into ' . $this->directory);
             exec('git clone ' . $this->generateUrl(), $output, $return);
+            var_dump($output);
             if (0 !== $return){
                 throw new \Exception("Could not clone {$this->url}");
             }

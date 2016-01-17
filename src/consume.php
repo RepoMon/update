@@ -12,12 +12,14 @@ $app['logger']->notice(sprintf("rabbit host: %s port: %s channel: %s\n",
 
 $updateHandler = function($command) use ($app) {
 
+    $app['logger']->notice(print_r($command, 1));
+
     // update the repository specified in command
     $command = $app['update_command_factory']->create(
-        $command['url'],
-        $command['language'],
-        $command['depdency_manager'],
-        $command['token']
+        $command['data']['url'],
+        $command['data']['language'],
+        $command['data']['dependency_manager'],
+        $command['data']['token']
     );
 
     $command->execute([]);

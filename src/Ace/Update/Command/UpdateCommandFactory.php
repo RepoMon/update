@@ -1,6 +1,7 @@
 <?php namespace Ace\Update\Command;
 
 use Ace\Update\Domain\Repository;
+use Monolog\Logger;
 
 /**
  * @author timrodger
@@ -15,11 +16,17 @@ class UpdateCommandFactory
     private $repository_dir;
 
     /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @param $repository_dir
      */
-    public function __construct($repository_dir)
+    public function __construct($repository_dir, Logger $logger)
     {
         $this->repository_dir = $repository_dir;
+        $this->logger = $logger;
     }
 
     /**
@@ -29,14 +36,16 @@ class UpdateCommandFactory
      * @param $token
      * @return CurrentUpdater
      */
-    public function create($url,  $language, $dependency_manager, $token)
+    public function create($url, $language, $dependency_manager, $token)
     {
+        $this->logger->notice(__METHOD__ . ' ' . $this->repository_dir);
+
         $repository = new Repository(
             $url,
             $this->repository_dir,
             $token
         );
 
-        return new CurrentUpdater($repository);
+        return new CurrentUpdater($repository, $this->logger);
     }
 }

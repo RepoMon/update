@@ -21,7 +21,7 @@ class Configuration
 
     public function getServiceName()
     {
-        return 'Repository Monitor v4.0.0';
+        return 'Repository Update v4.0.0';
     }
 
     /**
