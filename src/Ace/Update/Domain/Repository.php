@@ -111,9 +111,10 @@ class Repository
      */
     public function update()
     {
+        var_dump(__METHOD__ . ' ' . $this->directory);
+
         // cd to dir
         chdir($this->directory);
-        var_dump(__METHOD__);
 
         // check if local repo exists
         if (!$this->isCheckedOut()) {
@@ -263,6 +264,7 @@ class Repository
         );
 
         foreach($files as $file){
+
             if ($name === $file->getFileName()){
                 return file_get_contents($file->getPathName());
             }
@@ -281,7 +283,9 @@ class Repository
         );
 
         foreach($files as $file){
+            var_dump(__METHOD__ . ' ' . $file->getFileName());
             if ($name === $file->getFileName()){
+                var_dump(__METHOD__ . ' found ' . $file->getPathInfo()->getRealPath());
                 return $file->getPathInfo()->getRealPath();
             }
         }

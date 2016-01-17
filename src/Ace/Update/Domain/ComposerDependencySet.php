@@ -92,7 +92,7 @@ class ComposerDependencySet implements DependencySetInterface
             throw new FileNotFoundException("'composer.json not found'");
         }
 
-        $this->command_line->exec('cd ' . $path);
+        $this->command_line->chDir($path);
 
         // update the current dependencies
         $this->command_line->exec('composer update  --prefer-dist --no-scripts');

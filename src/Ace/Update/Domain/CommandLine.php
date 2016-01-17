@@ -19,6 +19,14 @@ class CommandLine
         $this->directory = $directory;
     }
 
+    public function chDir($path)
+    {
+        if (is_dir($path)) {
+            chdir($path);
+            $this->directory = $path;
+        }
+    }
+
     /**
      * @param $cmd string
      * @return array of output lines
