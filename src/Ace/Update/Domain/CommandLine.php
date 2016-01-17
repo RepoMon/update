@@ -14,11 +14,20 @@ class CommandLine
      */
     private $directory;
 
+    /**
+     * CommandLine constructor.
+     * @param string $directory
+     */
     public function __construct($directory)
     {
         $this->directory = $directory;
     }
 
+    /**
+     * Update this directory operated on
+     *
+     * @param $path
+     */
     public function chDir($path)
     {
         if (is_dir($path)) {

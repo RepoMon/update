@@ -1,17 +1,22 @@
-FROM php:latest
+FROM ubuntu:latest
 
 MAINTAINER Tim Rodger <tim.rodger@gmail.com>
 
+EXPOSE 80
+
 RUN apt-get update -qq && \
     apt-get install -y \
+    php5 \
+    php5-mysql \
+    php5-curl \
+    php5-cli \
+    php5-intl \
+    php5-fpm \
     curl \
     libicu-dev \
     zip \
     unzip \
     git
-
-# install bcmath and mbstring for videlalvaro/php-amqplib
-RUN docker-php-ext-install bcmath mbstring
 
 RUN curl -sS https://getcomposer.org/installer | php \
   && mv composer.phar /usr/bin/composer
