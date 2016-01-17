@@ -1,0 +1,12 @@
+language: php
+
+php:
+  - 7
+
+before_script:
+  - cd src
+  - composer self-update
+  - composer install
+
+script:
+  phpunit --exclude-group filesystem Test/
