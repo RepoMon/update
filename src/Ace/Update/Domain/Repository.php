@@ -3,6 +3,7 @@
 use Ace\Update\Exception\DirectoryNotFoundException;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
+use SplFileInfo;
 
 /**
  * Represents a git repository
@@ -111,8 +112,6 @@ class Repository
      */
     public function update()
     {
-        var_dump(__METHOD__ . ' ' . $this->directory);
-
         // cd to dir
         chdir($this->directory);
 
@@ -260,7 +259,7 @@ class Repository
     public function findFile($name)
     {
         $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->directory . '/' . $this->name), RecursiveIteratorIterator::SELF_FIRST
+            new RecursiveDirectoryIterator($this->getRootDirectory()), RecursiveIteratorIterator::SELF_FIRST
         );
 
         foreach($files as $file){
@@ -279,16 +278,14 @@ class Repository
     public function findFilePath($name)
     {
         $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->directory . '/' . $this->name), RecursiveIteratorIterator::SELF_FIRST
+            new RecursiveDirectoryIterator($this->getRootDirectory()), RecursiveIteratorIterator::SELF_FIRST
         );
 
         foreach($files as $file){
-            // var_dump(__METHOD__ . ' ' . $file->getFileName());
             if ($name === $file->getFileName()){
-                // var_dump(__METHOD__ . ' found ' . $file->getPathInfo()->getRealPath());
                 $path = $file->getPathInfo()->getRealPath();
                 // return the path relative to the repository root
-                $root = (new \SplFileInfo($this->directory . '/' . $this->name))->getRealPath();
+                $root = (new SplFileInfo($this->getRootDirectory()))->getRealPath();
                 return ltrim(str_replace($root, '', $path), '/');
             }
         }
@@ -412,6 +409,14 @@ class Repository
      */
     private function getFilePath($name)
     {
-        return $this->directory . '/' . $this->name . '/' . $name;
+        return $this->getRootDirectory() . '/' . $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRootDirectory()
+    {
+        return $this->directory . '/' . $this->name;
     }
 }
