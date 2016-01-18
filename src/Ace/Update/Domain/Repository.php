@@ -79,6 +79,7 @@ class Repository
     }
 
     /**
+     * @deprecated
      * Return an id string for this repo
      * @return string
      */

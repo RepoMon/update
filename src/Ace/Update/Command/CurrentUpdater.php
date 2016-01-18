@@ -48,5 +48,8 @@ class CurrentUpdater extends UpdateCommand
 
         // run git push origin $branch
         $this->repository->push($branch);
+
+        // remove local files
+
     }
 }
