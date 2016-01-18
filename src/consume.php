@@ -14,15 +14,23 @@ $updateHandler = function($command) use ($app) {
 
     $app['logger']->notice(print_r($command, 1));
 
-    // update the repository specified in command
-    $command = $app['update_command_factory']->create(
-        $command['data']['url'],
-        $command['data']['language'],
-        $command['data']['dependency_manager'],
-        $command['data']['token']
-    );
+    if ('composer' === $command['data']['dependency_manager']) {
 
-    $command->execute([]);
+        $app['logger']->notice("Updating " . $command['data']['url']);
+
+        // update the repository specified in command
+        $command = $app['update_command_factory']->create(
+            $command['data']['url'],
+            $command['data']['language'],
+            $command['data']['dependency_manager'],
+            $command['data']['token']
+        );
+
+        $command->execute([]);
+
+    } else {
+        $app['logger']->notice('Ignoring ' . $command['data']['url'] . ' with ' . $command['data']['dependency_manager']);
+    }
 };
 
 
