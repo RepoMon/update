@@ -274,7 +274,7 @@ class Repository
 
     /**
      * @param $name string
-     * @return string the path to the file with this name
+     * @return string the path to the file with this name relative to the repository root directory
      */
     public function findFilePath($name)
     {
@@ -283,12 +283,17 @@ class Repository
         );
 
         foreach($files as $file){
-            var_dump(__METHOD__ . ' ' . $file->getFileName());
+            // var_dump(__METHOD__ . ' ' . $file->getFileName());
             if ($name === $file->getFileName()){
-                var_dump(__METHOD__ . ' found ' . $file->getPathInfo()->getRealPath());
-                return $file->getPathInfo()->getRealPath();
+                // var_dump(__METHOD__ . ' found ' . $file->getPathInfo()->getRealPath());
+                $path = $file->getPathInfo()->getRealPath();
+                // return the path relative to the repository root
+                $root = (new \SplFileInfo($this->directory . '/' . $this->name))->getRealPath();
+                return ltrim(str_replace($root, '', $path), '/');
             }
         }
+
+        return null;
     }
 
     /**

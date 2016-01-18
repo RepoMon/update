@@ -88,7 +88,7 @@ class ComposerDependencySet implements DependencySetInterface
     {
         $path = $this->repository->findFilePath('composer.json');
 
-        if (!$path){
+        if (is_null($path)){
             throw new FileNotFoundException("'composer.json not found'");
         }
 
@@ -98,6 +98,6 @@ class ComposerDependencySet implements DependencySetInterface
         $this->command_line->exec('composer update  --prefer-dist --no-scripts');
 
         // Add composer.lock to git branch
-        $this->repository->add('composer.lock');
+        $this->repository->add("$path/composer.lock");
     }
 }

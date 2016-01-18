@@ -232,7 +232,7 @@ class RepositoryIntegrationTest extends PHPUnit_Framework_TestCase
 
         $path = $this->repository->findFilePath(self::FILE_ONE);
 
-        $expected = (new SplFileInfo($this->directory . '/' . $this->repo_name))->getRealPath();
+        $expected = '';
         $this->assertSame($expected, $path);
     }
 
@@ -241,7 +241,7 @@ class RepositoryIntegrationTest extends PHPUnit_Framework_TestCase
         $this->givenACheckout();
 
         $path = $this->repository->findFilePath(self::FILE_THREE);
-        $expected = (new SplFileInfo($this->directory . '/' . $this->repo_name . '/sub-dir'))->getRealPath();
+        $expected = 'sub-dir';
 
         $this->assertSame($expected, $path);
     }
