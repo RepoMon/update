@@ -31,13 +31,13 @@ class CurrentUpdater extends UpdateCommand
      */
     public function execute($data)
     {
-        $this->logger->notice(__METHOD__ . "::" . $this->repository->getUrl());
+        $this->logger->notice(__METHOD__ . ":: " . $this->repository->getUrl());
 
         $this->logger->notice(__METHOD__ . ":: is checked out ? " . $this->repository->isCheckedOut());
 
         $branch = $this->createBranchFromLatestTag();
 
-        $this->logger->notice(__METHOD__ . "::" . $branch);
+        $this->logger->notice(__METHOD__ . ":: branch " . $branch);
 
         $this->repository->checkout($branch);
 

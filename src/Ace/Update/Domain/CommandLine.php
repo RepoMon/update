@@ -32,7 +32,7 @@ class CommandLine
     {
         if (is_dir($path)) {
             chdir($path);
-            $this->directory = $path;
+            $this->directory = getcwd();
         }
     }
 
@@ -50,7 +50,7 @@ class CommandLine
             }
             return $output;
         } else {
-            throw new DirectoryNotFoundException("{$this->directory} is missing");
+            throw new DirectoryNotFoundException("{$this->directory} is missing. " . $cmd);
         }
     }
 }

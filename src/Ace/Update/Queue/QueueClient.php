@@ -119,7 +119,7 @@ class QueueClient
                 try {
                     $handlers[$event['name']]($event);
                 } catch (Exception $ex) {
-                    print "Error handling " . $event['name'] . " with exception " . get_class($ex) . "\n" . $ex->getMessage();
+                    print "Error handling " . $event['name'] . " with exception " . get_class($ex) . " " . $ex->getMessage();
                 }
             }
         };

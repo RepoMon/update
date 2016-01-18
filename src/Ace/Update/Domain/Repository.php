@@ -48,7 +48,7 @@ class Repository
         $parts = explode('/', $this->url);
         $this->name = array_pop($parts);
         $this->token = $token;
-        $this->command_line = new CommandLine($this->getCheckoutDirectory());
+        $this->command_line = new CommandLine($this->getRootDirectory());
     }
 
     /**
@@ -56,7 +56,7 @@ class Repository
      */
     public function getDependencySet()
     {
-        $command_line = new CommandLine($this->getCheckoutDirectory());
+        $command_line = new CommandLine($this->getRootDirectory());
 
         /**
          * pass type of dependency set to use to constructor
@@ -68,16 +68,6 @@ class Repository
             $dependency_set->setGitHubToken($this->token);
         }
         return $dependency_set;
-    }
-
-    /**
-     * Return the director location of the checkout
-     *
-     * @return string
-     */
-    private function getCheckoutDirectory()
-    {
-        return $this->directory .'/' . $this->name;
     }
 
     /**
@@ -102,7 +92,7 @@ class Repository
      */
     public function isCheckedOut()
     {
-        return is_dir($this->getCheckoutDirectory());
+        return is_dir($this->getRootDirectory());
     }
 
     /**
