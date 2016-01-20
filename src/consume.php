@@ -28,11 +28,20 @@ $updateHandler = function($command) use ($app) {
 
         $command->execute([]);
 
+        $app['queue-client']->publish(
+            [
+                'name' => 'repo-mon.repository.updated',
+                'data' => [
+                    'full_name' => $command['data']['full_name']
+                ],
+                'version' => '1.0.0'
+            ]
+        );
+
     } else {
         $app['logger']->notice('Ignoring ' . $command['data']['url'] . ' with ' . $command['data']['dependency_manager']);
     }
 };
-
 
 $app['queue-client']->addEventHandler('command.repository.update', $updateHandler);
 
