@@ -19,14 +19,14 @@ $updateHandler = function($command) use ($app) {
         $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
-        $command = $app['update_command_factory']->create(
+        $updater = $app['update_command_factory']->create(
             $command['data']['url'],
             $command['data']['language'],
             $command['data']['dependency_manager'],
             $command['data']['token']
         );
 
-        $command->execute([]);
+        $updater->execute([]);
 
         $app['queue-client']->publish(
             [
