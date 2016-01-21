@@ -59,7 +59,7 @@ class ComposerUpdater
         // find composer files in remote repo
         // copy composer files to $directory
         // take an md5 sum of lock file before updating
-        // run composer update
+        // run 'composer update  --prefer-dist --no-scripts'
         // check for changes - abort if no local changes
         // create a new branch from $branch
         // push new lock file to new branch
