@@ -14,19 +14,19 @@ $updateHandler = function($command) use ($app) {
 
     $app['logger']->notice(print_r($command, 1));
 
+    // check we can handle this event
     if ('composer' === $command['data']['dependency_manager']) {
 
         $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
         $updater = $app['update_command_factory']->create(
-            $command['data']['url'],
-            $command['data']['language'],
-            $command['data']['dependency_manager'],
-            $command['data']['token']
+            $command['data']['full_name'],
+            $command['data']['token'],
+            $command['data']['branch']
         );
 
-        $updater->execute([]);
+        $updater->run();
 
         $app['queue-client']->publish(
             [

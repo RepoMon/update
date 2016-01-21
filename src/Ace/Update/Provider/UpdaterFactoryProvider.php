@@ -2,7 +2,7 @@
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;
-use Ace\Update\Command\UpdateCommandFactory;
+use Ace\Update\Domain\UpdaterFactory;
 
 /**
  * @author timrodger
@@ -14,7 +14,7 @@ class UpdaterFactoryProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-        $app['update_command_factory'] = new UpdateCommandFactory(
+        $app['updater_factory'] = new UpdaterFactory(
             $app['config']->getRepoDir(),
             $app['logger']
         );
