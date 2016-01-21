@@ -8,7 +8,7 @@ use Ace\Update\Command\UpdateCommandFactory;
  * @author timrodger
  * Date: 07/06/15
  */
-class UpdateCommandFactoryProvider implements ServiceProviderInterface
+class UpdaterFactoryProvider implements ServiceProviderInterface
 {
     public function register(Application $app){}
 
