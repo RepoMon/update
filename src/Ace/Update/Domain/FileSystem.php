@@ -31,7 +31,7 @@ class FileSystem
     /**
      *
      */
-    public function makeDir()
+    public function makeDirectory()
     {
         if (!is_dir($this->directory)) {
             mkdir($this->directory, 0777, true);
@@ -49,5 +49,13 @@ class FileSystem
         file_put_contents($file, $contents);
 
         return $file;
+    }
+
+    /**
+     *
+     */
+    public function removeDirectory()
+    {
+        exec('rm -r ' . $this->directory);
     }
 }

@@ -82,16 +82,27 @@ class Updater
 
         if (!is_null($new_contents)) {
 
+            $this->logger->info('Lock file updated');
+
             $this->repository->createBranch($from_branch, $to_branch);
 
             // what if branch already exists? use it or stop here?
             $this->repository->writeFile($lock_file['path'], $lock_file['sha'], $new_contents, $to_branch);
 
+            $this->repository->createPullRequest('Repository Monitor update', $from_branch, $to_branch, 'Scheduled dependency update');
             return true;
-
         } else {
             $this->logger->info('No changes made');
             return false;
         }
+    }
+
+    /**
+     *
+     */
+    public function complete()
+    {
+        $this->logger->info(__METHOD__);
+        $this->file_system->removeDirectory();
     }
 }

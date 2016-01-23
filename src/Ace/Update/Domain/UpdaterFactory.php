@@ -2,6 +2,7 @@
 
 use Github\Client;
 use Monolog\Logger;
+use Exception;
 
 /**
  * @author timrodger
@@ -38,14 +39,6 @@ class UpdaterFactory
     {
         $this->logger->notice(__METHOD__);
 
-        $client = new Client();
-        $git_hub_repo = new GitHubRepository($client, $full_name, $token);
-        $git_hub_repo->authenticate();
-
-        $temp_dir = $this->repository_dir . '/' . rand();
-        $file_system = new FileSystem($temp_dir);
-        $file_system->makeDir();
-
         switch ($dependency_manager) {
             case 'composer':
                 $manager = new ComposerDependencyManager();
@@ -56,6 +49,14 @@ class UpdaterFactory
                 // throw exception
         }
 
-        return new Updater($client, $manager, $file_system, $this->logger);
+        $client = new Client();
+        $git_hub_repo = new GitHubRepository($client, $full_name, $token, $this->logger);
+        $git_hub_repo->authenticate();
+
+        $temp_dir = $this->repository_dir . '/' . rand();
+        $file_system = new FileSystem($temp_dir);
+        $file_system->makeDirectory();
+
+        return new Updater($git_hub_repo, $manager, $file_system, $this->logger);
     }
 }

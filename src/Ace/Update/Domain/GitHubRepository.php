@@ -115,20 +115,22 @@ class GitHubRepository
         $branches = $this->client->api('git')->references()->branches($owner, $repo_name);
 
         $to_branch = $this->findBranch($branches, $to);
+
         if (is_array($to_branch)) {
             // branch exists already
             return false;
         }
 
         $from_branch = $this->findBranch($branches, $from);
-        if (is_array($from)){
-            $new_branch = 'refs/heads/' . $to;
+
+        if (is_array($from_branch)){
+            $new_branch = $this->fullRefName($to);
             $this->client->api('git')->references()->create($owner, $repo_name, ['ref' => $new_branch, 'sha' => $from_branch['object']['sha']]);
             $this->logger->info(__METHOD__ . ' created ' . $new_branch);
             return true;
+        } else {
+            throw new BranchNotFoundException('Did not find branch "' . $from . '"');
         }
-
-        throw new BranchNotFoundException('Did not find branch ' . $from);
     }
 
     /**
@@ -138,9 +140,11 @@ class GitHubRepository
      */
     private function findBranch(array $branches, $name)
     {
+        $full_ref_name = $this->fullRefName($name);
+
         foreach ($branches as $branch) {
-            if ($branch['ref'] === 'refs/heads/' . $name) {
-                // branch alrady exists
+            $this->logger->info(__METHOD__ . ' ' . $branch['ref']);
+            if ($branch['ref'] === $full_ref_name) {
                 return $branch;
             }
         }
@@ -149,10 +153,19 @@ class GitHubRepository
     }
 
     /**
-     * @param $path
-     * @param $sha
-     * @param $contents
-     * @param $to_branch
+     * @param string $name
+     * @return string
+     */
+    private function fullRefName($name)
+    {
+        return 'refs/heads/' . $name;
+    }
+
+    /**
+     * @param string $path
+     * @param string $sha
+     * @param string $contents
+     * @param string $to_branch
      */
     public function writeFile($path, $sha, $contents, $to_branch)
     {
@@ -169,6 +182,28 @@ class GitHubRepository
             [
                 'name' => $this->account_name,
                 'email' => $this->account_email
+            ]
+        );
+    }
+
+    /**
+     * @param string $title
+     * @param string $base target branch
+     * @param string $head branch being pulled
+     * @param string $body message
+     */
+    public function createPullRequest($title, $base, $head, $body)
+    {
+        list($owner, $repo_name) = explode('/', $this->full_name);
+
+        $this->client->api('pr')->create(
+            $owner,
+            $repo_name,
+            [
+                'title' => $title,
+                'base' => $base,
+                'head' => $head,
+                'body' => $body
             ]
         );
     }
