@@ -21,6 +21,7 @@ class UpdaterFactory
 
     /**
      * @param $repository_dir
+     * @param Logger $logger
      */
     public function __construct($repository_dir, Logger $logger)
     {
@@ -29,14 +30,32 @@ class UpdaterFactory
     }
 
     /**
-     * @param $full_name
+     * @param $dependency_manager
      * @param $token
-     * @param $branch
-     * @return ComposerUpdater
+     * @return Updater
      */
-    public function create($full_name, $token, $branch)
+    public function create($dependency_manager, $full_name, $token)
     {
-        $this->logger->notice(__METHOD__ . "$full_name, $token, $branch");
-        return new ComposerUpdater(new Client(), $this->repository_dir, $full_name, $token, $branch, $this->logger);
+        $this->logger->notice(__METHOD__);
+
+        $client = new Client();
+        $git_hub_repo = new GitHubRepository($client, $full_name, $token);
+        $git_hub_repo->authenticate();
+
+        $temp_dir = $this->repository_dir . '/' . rand();
+        $file_system = new FileSystem($temp_dir);
+        $file_system->makeDir();
+
+        switch ($dependency_manager) {
+            case 'composer':
+                $manager = new ComposerDependencyManager();
+                break;
+            case 'npm':
+            default:
+                throw new Exception("$dependency_manager is not supported");
+                // throw exception
+        }
+
+        return new Updater($client, $manager, $file_system, $this->logger);
     }
 }

@@ -15,20 +15,19 @@ $updateHandler = function($command) use ($app) {
     $app['logger']->notice(print_r($command, 1));
 
     // check we can handle this event
-    if ('composer' === $command['data']['dependency_manager']) {
-
+    try {
         $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
         $updater = $app['updater_factory']->create(
+            $command['data']['dependency_manager'],
             $command['data']['full_name'],
-            $command['data']['token'],
-            $command['data']['branch']
+            $command['data']['token']
         );
 
         $app['logger']->notice(get_class($updater));
 
-        $updater->run();
+        $updater->run($command['data']['branch'], $app['config']->getTargetBranchName());
 
         $app['queue-client']->publish(
             [
@@ -40,8 +39,8 @@ $updateHandler = function($command) use ($app) {
             ]
         );
 
-    } else {
-        $app['logger']->notice('Ignoring ' . $command['data']['url'] . ' with ' . $command['data']['dependency_manager']);
+    } catch (Exception $ex) {
+        $app['logger']->error('Failed to update ' . $command['data']['url'] . ' with ' . $command['data']['dependency_manager']);
     }
 };
 

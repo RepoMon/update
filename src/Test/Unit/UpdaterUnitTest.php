@@ -1,6 +1,6 @@
 <?php
 
-use Ace\Update\Domain\ComposerUpdater;
+use Ace\Update\Domain\Updater;
 
 /**
  * @group unit
@@ -14,86 +14,166 @@ class UpdaterUnitTest extends PHPUnit_Framework_TestCase
      */
     private $mock_logger;
 
-    private $mock_client;
+    private $mock_repository;
 
-    private $mock_search_api;
+    private $mock_dependency_manager;
+
+    private $mock_file_system;
 
     private $updater;
-
-    private $token = 'abcd1234';
 
     public function setUp()
     {
         parent::setUp();
 
-        $this->givenAMockClient();
-        $this->givenAMockSearchApi();
+        $this->givenAMockGitHubRepository();
+        $this->givenAMockDependencyManager();
+        $this->givenAMockFileSystem();
         $this->givenAMockLogger();
+
+        $this->givenAnUpdater();
     }
 
     /**
+     * @expectedException Ace\Update\Exception\FileNotFoundException
      */
-    public function testRunAuthenticates()
+    public function testRunThrowsExceptionWhenConfigFileIsNotFound()
     {
-        $this->givenACommand();
-        $this->mock_client->expects($this->once())
-            ->method('authenticate')
-            ->with($this->token, Github\Client::AUTH_HTTP_TOKEN);
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(null));
 
-        $this->mock_search_api->expects($this->any())
-            ->method('code')
-            ->will($this->returnValue([]));
-
-        $this->updater->run();
+        $this->updater->run('master', 'auto-update');
     }
 
     /**
+     * @expectedException GitHub\Exception\RuntimeException
      */
-    public function testRunCatchesSearchExceptions()
+    public function testRunThrowsExceptionWhenFindConfigFileFails()
     {
-        $this->givenACommand();
-        $this->mock_client->expects($this->once())
-            ->method('authenticate')
-            ->with($this->token, Github\Client::AUTH_HTTP_TOKEN);
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->throwException(new Github\Exception\RuntimeException));
 
-        $this->mock_search_api->expects($this->any())
-            ->method('code')
-            ->will($this->throwException(new Github\Exception\ValidationFailedException));
-
-        $this->updater->run();
+        $this->updater->run('master', 'auto-update');
     }
 
-    private function givenACommand()
+    /**
+     * @expectedException GitHub\Exception\RuntimeException
+     */
+    public function testRunThrowsExceptionWhenCreateBranchFails()
     {
-        $this->updater = new ComposerUpdater(
-            $this->mock_client,
-            '/tmp',
-            'owner/repo',
-            $this->token,
-            'master',
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(['path' => '/composer.json', 'sha' => 'abcde']));
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue('the new contents'));
+
+        $this->mock_repository->expects($this->once())
+            ->method('createBranch')
+            ->will($this->throwException(new Github\Exception\RuntimeException));
+
+        $this->updater->run('master', 'auto-update');
+    }
+
+    /**
+     * @expectedException GitHub\Exception\RuntimeException
+     */
+    public function testRunThrowsExceptionWhenWriteFileFails()
+    {
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(['path' => '/composer.json', 'sha' => 'abcde']));
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue('the new contents'));
+
+        $this->mock_repository->expects($this->once())
+            ->method('createBranch');
+
+        $this->mock_repository->expects($this->once())
+            ->method('writeFile')
+            ->will($this->throwException(new Github\Exception\RuntimeException));
+
+        $this->updater->run('master', 'auto-update');
+    }
+
+    public function testRunReturnsTrueWhenChangesAreMade()
+    {
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(['path' => '/composer.json', 'sha' => 'abcde']));
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue('the new contents'));
+
+        $this->mock_repository->expects($this->once())
+            ->method('createBranch');
+
+        $this->mock_repository->expects($this->once())
+            ->method('writeFile');
+
+        $result = $this->updater->run('master', 'auto-update');
+
+        $this->assertTrue($result);
+
+    }
+
+    public function testRunReturnsFalseWhenNoChangesAreMade()
+    {
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(['path' => '/composer.json', 'sha' => 'abcde']));
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue(null));
+
+        $this->mock_repository->expects($this->never())
+            ->method('createBranch');
+
+        $this->mock_repository->expects($this->never())
+            ->method('writeFile');
+
+        $result = $this->updater->run('master', 'auto-update');
+
+        $this->assertFalse($result);
+
+    }
+
+    private function givenAnUpdater()
+    {
+        $this->updater = new Updater(
+            $this->mock_repository,
+            $this->mock_dependency_manager,
+            $this->mock_file_system,
             $this->mock_logger
         );
     }
 
-    private function givenAMockClient()
+    private function givenAMockGitHubRepository()
     {
-        $this->mock_client = $this->getMockBuilder('Github\Client')
-            ->getMock();
-    }
-
-    private function givenAMockSearchApi()
-    {
-        $this->mock_search_api = $this->getMockBuilder('Github\Api\Search')
+        $this->mock_repository = $this->getMockBuilder('Ace\Update\Domain\GitHubRepository')
             ->disableOriginalConstructor()
             ->getMock();
-
-        $this->mock_client->expects($this->any())
-            ->method('api')
-            ->with('search')
-            ->will($this->returnValue($this->mock_search_api));
     }
 
+    private function givenAMockDependencyManager()
+    {
+        $this->mock_dependency_manager = $this->getMockBuilder('Ace\Update\Domain\DependencyManagerInterface')
+            ->getMock();
+    }
 
+    private function givenAMockFileSystem()
+    {
+        $this->mock_file_system = $this->getMockBuilder('Ace\Update\Domain\FileSystem')
+            ->disableOriginalConstructor()
+            ->getMock();
+    }
     private function givenAMockLogger()
     {
         $this->mock_logger = $this->getMockBuilder('Monolog\Logger')

@@ -32,38 +32,9 @@ class Configuration
         return $this->repo_dir;
     }
 
-    public function getStoreDsn()
+    public function getTargetBranchName()
     {
-        // should contain a string like this 'tcp://172.17.0.154:6379'
-        return getenv('REDIS_PORT');
-    }
-
-    /**
-     * @return string
-     */
-    public function getDbUser()
-    {
-        return 'root';
-    }
-
-    /**
-     * @return string
-     */
-    public function getDbPassword()
-    {
-        // env vars not available on publish?
-        return '1234';
-        //return getenv('MYSQL_ROOT_PASSWORD');
-    }
-
-    public function getDbHost()
-    {
-        return 'mysql';
-    }
-
-    public function getDbName()
-    {
-        return 'repositories';
+        return 'repo-man-update';
     }
 
     /**
