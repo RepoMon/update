@@ -70,7 +70,6 @@ class Updater
         $config_contents = $this->repository->getFileContents($config_file['path'], $from_branch);
         $this->file_system->write($config_file['path'], $config_contents);
 
-
         $lock_file = $this->repository->findFileInfo($this->dependency_manager->getLockFileName());
         if (!is_null($lock_file)) {
             // copy lock file locally
@@ -86,10 +85,15 @@ class Updater
 
             $this->repository->createBranch($from_branch, $to_branch);
 
-            // what if branch already exists? use it or stop here?
-            $this->repository->writeFile($lock_file['path'], $lock_file['sha'], $new_contents, $to_branch);
-
+            // what if lock file does not already exist, create lock file next to config_file['path']
+            if (!is_null($lock_file)) {
+                $this->repository->writeFile($lock_file['path'], $lock_file['sha'], $new_contents, $to_branch);
+            } else {
+                $path = pathinfo($config_file['path'], PATHINFO_DIRNAME);
+                $this->repository->writeFile($path . '/' . $this->dependency_manager->getLockFileName(), null, $new_contents, $to_branch);
+            }
             $this->repository->createPullRequest('Repository Monitor update', $from_branch, $to_branch, 'Scheduled dependency update');
+
             return true;
         } else {
             $this->logger->info('No changes made');

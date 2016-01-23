@@ -171,19 +171,34 @@ class GitHubRepository
     {
         list($owner, $repo_name) = explode('/', $this->full_name);
 
-        $this->client->api('repo')->contents()->update(
-            $owner,
-            $repo_name,
-            trim($path, '/'),
-            $contents,
-            "Auto updates $path",
-            $sha,
-            $to_branch,
-            [
-                'name' => $this->account_name,
-                'email' => $this->account_email
-            ]
-        );
+        if (!is_null($sha)) {
+            $this->client->api('repo')->contents()->update(
+                $owner,
+                $repo_name,
+                trim($path, '/'),
+                $contents,
+                "Auto updates $path",
+                $sha,
+                $to_branch,
+                [
+                    'name' => $this->account_name,
+                    'email' => $this->account_email
+                ]
+            );
+        } else {
+            $this->client->api('repo')->contents()->create(
+                $owner,
+                $repo_name,
+                trim($path, '/'),
+                $contents,
+                "Auto updates $path",
+                $to_branch,
+                [
+                    'name' => $this->account_name,
+                    'email' => $this->account_email
+                ]
+            );
+        }
     }
 
     /**

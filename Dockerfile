@@ -17,7 +17,8 @@ RUN apt-get update -qq && \
     libicu-dev \
     zip \
     unzip \
-    git
+    git \
+    npm
 
 RUN curl -sS https://getcomposer.org/installer | php \
   && mv composer.phar /usr/bin/composer

@@ -44,6 +44,8 @@ class UpdaterFactory
                 $manager = new ComposerDependencyManager();
                 break;
             case 'npm':
+                $manager = new NpmDependencyManager();
+                break;
             default:
                 throw new Exception("$dependency_manager is not supported");
                 // throw exception

@@ -1,19 +1,19 @@
 <?php namespace Ace\Update\Domain;
+
 /**
  * @author timrodger
  * Date: 23/01/2016
  */
-class ComposerDependencyManager implements DependencyManagerInterface
+class NpmDependencyManager
 {
-
     public function getConfigFileName()
     {
-        return 'composer.json';
+        return 'package.json';
     }
 
     public function getLockFileName()
     {
-        return 'composer.lock';
+        return 'npm-shrinkwrap.json';
     }
 
     /**
@@ -32,7 +32,8 @@ class ComposerDependencyManager implements DependencyManagerInterface
             $lock_sum = md5_file($lock_file);
         }
 
-        exec('composer update  --prefer-dist --no-scripts', $output, $success);
+        exec('npm install', $output, $success);
+        exec('npm shrinkwrap', $output, $success);
 
         // check for changes - return file contents if it's different
         if (md5_file($lock_file) !== $lock_sum){
