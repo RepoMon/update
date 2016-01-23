@@ -20,11 +20,13 @@ $updateHandler = function($command) use ($app) {
         $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
-        $updater = $app['update_command_factory']->create(
+        $updater = $app['updater_factory']->create(
             $command['data']['full_name'],
             $command['data']['token'],
             $command['data']['branch']
         );
+
+        $app['logger']->notice(get_class($updater));
 
         $updater->run();
 

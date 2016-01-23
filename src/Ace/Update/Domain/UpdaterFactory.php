@@ -1,5 +1,6 @@
 <?php namespace Ace\Update\Domain;
 
+use Github\Client;
 use Monolog\Logger;
 
 /**
@@ -36,6 +37,6 @@ class UpdaterFactory
     public function create($full_name, $token, $branch)
     {
         $this->logger->notice(__METHOD__ . "$full_name, $token, $branch");
-        return new ComposerUpdater($this->repository_dir, $full_name, $token, $branch, $this->logger);
+        return new ComposerUpdater(new Client(), $this->repository_dir, $full_name, $token, $branch, $this->logger);
     }
 }

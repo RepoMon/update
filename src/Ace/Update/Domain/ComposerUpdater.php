@@ -5,7 +5,7 @@ use Github\Api\Repo;
 use Github\Api\Search;
 use Github\Client;
 use Monolog\Logger;
-use ErrorException;
+use Exception;
 use SplFileInfo;
 
 /**
@@ -66,6 +66,8 @@ class ComposerUpdater
      */
     public function run()
     {
+        $this->logger->info(__METHOD__);
+
         try {
             // authenticate with GH using $token
             $this->client->authenticate($this->token, Client::AUTH_HTTP_TOKEN);
@@ -91,6 +93,7 @@ class ComposerUpdater
 
             if (!is_null($new_lock_contents)) {
                 $branch = 'repo-man-update';
+                // what if branch already exists? use it or stop here?
                 $new_branch = $this->createBranch($this->client->api('git')->references(), $branch);
 
                 // push new lock file to new branch
@@ -99,7 +102,7 @@ class ComposerUpdater
                 $this->client->api('repo')->contents()->update(
                     $owner,
                     $name,
-                    $composer_lock['path'],
+                    trim($composer_lock['path'], '/'),
                     $new_lock_contents,
                     'Auto updates composer.lock',
                     $composer_lock['sha'],
@@ -112,7 +115,7 @@ class ComposerUpdater
                 $this->logger->info('No changes to composer.lock were made');
             }
 
-        } catch (ErrorException $ex){
+        } catch (Exception $ex){
             $this->logger->error(get_class($ex) . ' ' .$ex->getMessage());
         }
     }
@@ -131,9 +134,9 @@ class ComposerUpdater
 
         $files = $search->code($query);
 
-        foreach ($files as $file) {
-            $this->logger->info('Found .json file ' . $file['path']);
-            if ($file['name'] = 'composer' . $extension){
+        foreach ($files['items'] as $file) {
+            if ($file['name'] === 'composer' . $extension){
+                $this->logger->info("Found $extension file " . print_r($file,1));
                 return $file;
             }
         }
@@ -147,12 +150,14 @@ class ComposerUpdater
      */
     private function copyFile(Repo $repo, $file_path)
     {
+        $file_path = trim($file_path, '/');
         $this->logger->info(__METHOD__ . ' ' . $file_path);
-
 
         if (!is_null($file_path)) {
             list($owner, $name) = explode('/', $this->full_name);
             $contents = $repo->contents()->download($owner, $name, '/' . $file_path, $this->branch);
+
+            $this->logger->info(__METHOD__ . ' ' . $contents);
 
             $file = $this->directory . '/' . $this->full_name . '/' . $file_path;
             file_put_contents($file, $contents);

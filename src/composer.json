@@ -20,8 +20,6 @@
         "bin-dir": "bin"
     },
 
-    "minimum-stability": "dev",
-
     "autoload": {
       "psr-0": {
         "Ace": ""
