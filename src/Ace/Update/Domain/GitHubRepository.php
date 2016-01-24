@@ -169,6 +169,8 @@ class GitHubRepository
      */
     public function writeFile($path, $sha, $contents, $to_branch)
     {
+        $this->logger->info(__METHOD__ . "'$path' '$sha' '$to_branch'");
+
         list($owner, $repo_name) = explode('/', $this->full_name);
 
         if (!is_null($sha)) {

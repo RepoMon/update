@@ -1,7 +1,7 @@
 <?php namespace Ace\Update\Domain;
+
 /**
- * @author timrodger
- * Date: 23/01/2016
+ * Uses composer to re-generate a composer.lock file
  */
 class ComposerDependencyManager implements DependencyManagerInterface
 {

@@ -1,11 +1,11 @@
 <?php namespace Ace\Update\Domain;
 
 /**
- * @author timrodger
- * Date: 23/01/2016
+ * Uses shrinkwrap to lock a package.json file at a particular version
  */
-class NpmDependencyManager
+class NpmDependencyManager implements DependencyManagerInterface
 {
+
     public function getConfigFileName()
     {
         return 'package.json';
