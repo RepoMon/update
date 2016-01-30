@@ -15,6 +15,8 @@ $updateHandler = function($command) use ($app) {
     $app['logger']->notice(print_r($command, 1));
 
     try {
+        $start = time();
+
         $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
@@ -24,15 +26,16 @@ $updateHandler = function($command) use ($app) {
             $command['data']['token']
         );
 
-        $app['logger']->notice(get_class($updater));
-
         $updater->run($command['data']['branch'], $app['config']->getTargetBranchName());
 
+        $duration = time() - $start;
         $app['queue-client']->publish(
             [
                 'name' => 'repo-mon.repository.updated',
                 'data' => [
-                    'full_name' => $command['data']['full_name']
+                    'full_name' => $command['data']['full_name'],
+                    'duration' => $duration,
+                    'timestamp' => time()
                 ],
                 'version' => '1.0.0'
             ]

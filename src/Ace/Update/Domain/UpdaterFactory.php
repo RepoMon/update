@@ -21,13 +21,19 @@ class UpdaterFactory
     private $logger;
 
     /**
+     * @var string
+     */
+    private $git_hub_host;
+
+    /**
      * @param $repository_dir
      * @param Logger $logger
      */
-    public function __construct($repository_dir, Logger $logger)
+    public function __construct($repository_dir, Logger $logger, $git_hub_host)
     {
         $this->repository_dir = $repository_dir;
         $this->logger = $logger;
+        $this->git_hub_host = $git_hub_host;
     }
 
     /**
@@ -37,7 +43,7 @@ class UpdaterFactory
      */
     public function create($dependency_manager, $full_name, $token)
     {
-        $this->logger->notice(__METHOD__);
+        $this->logger->debug(__METHOD__);
 
         switch ($dependency_manager) {
             case 'composer':
@@ -52,6 +58,14 @@ class UpdaterFactory
         }
 
         $client = new Client();
+
+        $this->logger->debug(sprintf("Client::setEnterpriseUrl() %s", $this->git_hub_host));
+
+        if (!empty($this->git_hub_host)) {
+            // seems there's a bug here?
+            //$client->setEnterpriseUrl($this->git_hub_host);
+        }
+
         $git_hub_repo = new GitHubRepository($client, $full_name, $token, $this->logger);
         $git_hub_repo->authenticate();
 

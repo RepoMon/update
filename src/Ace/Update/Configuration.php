@@ -69,4 +69,12 @@ class Configuration
     {
         return 'http://token';
     }
+
+    /**
+     * @return string
+     */
+    public function getRemoteApiHost()
+    {
+        return getenv('GIT_API_HOST');
+    }
 }

@@ -81,7 +81,7 @@ class UpdaterUnitTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException GitHub\Exception\RuntimeException
      */
-    public function testRunThrowsExceptionWhenWriteFileFails()
+    public function testRunThrowsExceptionWhenCreateFileFails()
     {
         $this->mock_repository->expects($this->any())
             ->method('findFileInfo')
@@ -95,13 +95,13 @@ class UpdaterUnitTest extends PHPUnit_Framework_TestCase
             ->method('createBranch');
 
         $this->mock_repository->expects($this->once())
-            ->method('writeFile')
+            ->method('updateFile')
             ->will($this->throwException(new Github\Exception\RuntimeException));
 
         $this->updater->run('master', 'auto-update');
     }
 
-    public function testRunReturnsTrueWhenChangesAreMade()
+    public function testRunCreatesPR()
     {
         $this->mock_repository->expects($this->any())
             ->method('findFileInfo')
@@ -112,10 +112,80 @@ class UpdaterUnitTest extends PHPUnit_Framework_TestCase
             ->will($this->returnValue('the new contents'));
 
         $this->mock_repository->expects($this->once())
-            ->method('createBranch');
+            ->method('createBranch')
+            ->will($this->returnValue(true));
+
+        $this->mock_repository->expects($this->never())
+            ->method('createFile');
 
         $this->mock_repository->expects($this->once())
-            ->method('writeFile');
+            ->method('updateFile');
+
+        $this->mock_repository->expects($this->once())
+            ->method('createPullRequest');
+
+        $result = $this->updater->run('master', 'auto-update');
+
+        $this->assertTrue($result);
+
+    }
+
+    public function testRunCreatesLockFile()
+    {
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->onConsecutiveCalls(
+                ['path' => '/composer.json', 'sha' => 'abcde'],
+                null
+                )
+            );
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue('the new contents'));
+
+        $this->mock_repository->expects($this->once())
+            ->method('createBranch')
+            ->will($this->returnValue(true));
+
+        $this->mock_repository->expects($this->once())
+            ->method('createFile');
+
+        $this->mock_repository->expects($this->never())
+            ->method('updateFile');
+
+        $this->mock_repository->expects($this->once())
+            ->method('createPullRequest');
+
+        $result = $this->updater->run('master', 'auto-update');
+
+        $this->assertTrue($result);
+
+    }
+
+    public function testRunDoesNotCreateSecondPR()
+    {
+        $this->mock_repository->expects($this->any())
+            ->method('findFileInfo')
+            ->will($this->returnValue(['path' => '/composer.json', 'sha' => 'abcde']));
+
+        $this->mock_dependency_manager->expects($this->once())
+            ->method('exec')
+            ->will($this->returnValue('the new contents'));
+
+        // branch already exists
+        $this->mock_repository->expects($this->once())
+            ->method('createBranch')
+            ->will($this->returnValue(false));
+
+        $this->mock_repository->expects($this->once())
+            ->method('updateFile');
+
+        $this->mock_repository->expects($this->never())
+            ->method('createFile');
+
+        $this->mock_repository->expects($this->never())
+            ->method('createPullRequest');
 
         $result = $this->updater->run('master', 'auto-update');
 
@@ -137,7 +207,13 @@ class UpdaterUnitTest extends PHPUnit_Framework_TestCase
             ->method('createBranch');
 
         $this->mock_repository->expects($this->never())
-            ->method('writeFile');
+            ->method('updateFile');
+
+        $this->mock_repository->expects($this->never())
+            ->method('createFile');
+
+        $this->mock_repository->expects($this->never())
+            ->method('createPullRequest');
 
         $result = $this->updater->run('master', 'auto-update');
 

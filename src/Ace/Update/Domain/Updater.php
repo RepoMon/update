@@ -58,11 +58,11 @@ class Updater
      */
     public function run($from_branch, $to_branch)
     {
-        $this->logger->info(__METHOD__);
+        $this->logger->debug(__METHOD__);
 
         $config_file = $this->repository->findFileInfo($this->dependency_manager->getConfigFileName());
         if (is_null($config_file)){
-            throw new FileNotFoundException("$config_file file not found");
+            throw new FileNotFoundException(sprintf("%s : file not found", $this->dependency_manager->getConfigFileName()));
         }
 
         // copy config file locally
@@ -80,23 +80,28 @@ class Updater
 
         if (!is_null($new_contents)) {
 
-            $this->logger->info('Lock file updated');
+            $this->logger->debug('Lock file updated');
 
-            $this->repository->createBranch($from_branch, $to_branch);
+            $branch_created = $this->repository->createBranch($from_branch, $to_branch);
 
-            // if lock file does not already exist then create it next to config_file['path']
             if (!is_null($lock_file)) {
-                $this->repository->writeFile($lock_file['path'], $lock_file['sha'], $new_contents, $to_branch);
+                // update file info on the lock file from the target branch, get its sha to use when updating it
+                $lock_file = $this->repository->getFileInfo($lock_file['path'], $to_branch);
+                $this->repository->updateFile($lock_file['path'], $lock_file['sha'], $new_contents, $to_branch);
             } else {
+                // the lock file does not exist, create it next to config_file['path']
                 $path = pathinfo($config_file['path'], PATHINFO_DIRNAME);
-                $this->repository->writeFile($path . '/' . $this->dependency_manager->getLockFileName(), null, $new_contents, $to_branch);
+                $this->repository->createFile($path . '/' . $this->dependency_manager->getLockFileName(), $new_contents, $to_branch);
             }
 
-            $this->repository->createPullRequest('Repository Monitor update', $from_branch, $to_branch, 'Scheduled dependency update');
+            // only make a pr if one does not already exist
+            if ($branch_created) {
+                $this->repository->createPullRequest('Repository Monitor update', $from_branch, $to_branch, 'Scheduled dependency update');
+            }
 
             return true;
         } else {
-            $this->logger->info('No changes made');
+            $this->logger->debug('No changes made');
             return false;
         }
     }
@@ -106,7 +111,7 @@ class Updater
      */
     public function complete()
     {
-        $this->logger->info(__METHOD__);
+        $this->logger->debug(__METHOD__);
         $this->file_system->removeDirectory();
     }
 }

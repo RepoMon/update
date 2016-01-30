@@ -16,7 +16,8 @@ class UpdaterFactoryProvider implements ServiceProviderInterface
     {
         $app['updater_factory'] = new UpdaterFactory(
             $app['config']->getRepoDir(),
-            $app['logger']
+            $app['logger'],
+            $app['config']->getRemoteApiHost()
         );
     }
 

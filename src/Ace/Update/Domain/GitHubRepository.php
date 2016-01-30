@@ -30,9 +30,25 @@ class GitHubRepository
      */
     private $logger;
 
+    /**
+     * @var string
+     */
     private $account_name = 'Dependency monitor';
 
+    /**
+     * @var string
+     */
     private $account_email = 'robot@dep-mon.net';
+
+    /**
+     * @var string
+     */
+    private $owner;
+
+    /**
+     * @var string
+     */
+    private $repo_name;
 
     /**
      * @param Client $client
@@ -46,6 +62,7 @@ class GitHubRepository
         $this->full_name = $full_name;
         $this->token = $token;
         $this->logger = $logger;
+        list($this->owner, $this->repo_name) = explode('/', $this->full_name);
     }
 
     /**
@@ -59,12 +76,12 @@ class GitHubRepository
     }
 
     /**
-     *
+     * authenticate with the API
      */
     public function authenticate()
     {
         $this->client->authenticate($this->token, Client::AUTH_HTTP_TOKEN);
-        $this->logger->info('Authenticated');
+        $this->logger->debug('Authenticated');
     }
 
     /**
@@ -76,19 +93,30 @@ class GitHubRepository
         $extension = pathinfo($file_name, PATHINFO_EXTENSION);
         $query = sprintf('repo:%s extension:.%s', $this->full_name, $extension);
 
-        $this->logger->info(__METHOD__ . ' ' . $query);
+        $this->logger->debug(__METHOD__ . ' ' . $query);
 
         $files = $this->client->api('search')->code($query);
 
         if (isset($files['items'])) {
             foreach ($files['items'] as $file) {
                 if ($file['name'] === $file_name) {
-                    $this->logger->info("Found $file_name");
+                    $this->logger->debug("Found $file_name");
                     return $file;
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * Returns info on the file as well as its contents
+     * @param string $path
+     * @param string $branch
+     * @return array
+     */
+    public function getFileInfo($path, $branch)
+    {
+        return $this->client->api('repo')->contents()->show($this->owner, $this->repo_name, $path, $branch);
     }
 
     /**
@@ -98,8 +126,16 @@ class GitHubRepository
      */
     public function getFileContents($path, $branch)
     {
-        list($owner, $repo_name) = explode('/', $this->full_name);
-        return $this->client->api('repo')->contents()->download($owner, $repo_name, $path, $branch);
+        return $this->client->api('repo')->contents()->download($this->owner, $this->repo_name, $path, $branch);
+    }
+
+    /**
+     * @param $name
+     * @return array|null
+     */
+    public function getBranch($name)
+    {
+        return $this->findBranch($this->client->api('git')->references()->branches($this->owner, $this->repo_name), $name);
     }
 
     /**
@@ -109,10 +145,8 @@ class GitHubRepository
      */
     public function createBranch($from, $to)
     {
-        list($owner, $repo_name) = explode('/', $this->full_name);
-
         // get the sha of $from to create a branch from
-        $branches = $this->client->api('git')->references()->branches($owner, $repo_name);
+        $branches = $this->client->api('git')->references()->branches($this->owner, $this->repo_name);
 
         $to_branch = $this->findBranch($branches, $to);
 
@@ -125,8 +159,15 @@ class GitHubRepository
 
         if (is_array($from_branch)){
             $new_branch = $this->fullRefName($to);
-            $this->client->api('git')->references()->create($owner, $repo_name, ['ref' => $new_branch, 'sha' => $from_branch['object']['sha']]);
-            $this->logger->info(__METHOD__ . ' created ' . $new_branch);
+            $this->client->api('git')->references()->create(
+                $this->owner,
+                $this->repo_name,
+                [
+                    'ref' => $new_branch,
+                    'sha' => $from_branch['object']['sha']
+                ]
+            );
+            $this->logger->debug(__METHOD__ . ' created ' . $new_branch);
             return true;
         } else {
             throw new BranchNotFoundException('Did not find branch "' . $from . '"');
@@ -143,7 +184,7 @@ class GitHubRepository
         $full_ref_name = $this->fullRefName($name);
 
         foreach ($branches as $branch) {
-            $this->logger->info(__METHOD__ . ' ' . $branch['ref']);
+            $this->logger->debug(__METHOD__ . ' ' . $branch['ref']);
             if ($branch['ref'] === $full_ref_name) {
                 return $branch;
             }
@@ -163,44 +204,51 @@ class GitHubRepository
 
     /**
      * @param string $path
+     * @param string $contents
+     * @param string $to_branch
+     */
+    public function createFile($path, $contents, $to_branch)
+    {
+        $this->logger->debug(__METHOD__ . "'$path' '$to_branch'");
+
+        $this->client->api('repo')->contents()->create(
+            $this->owner,
+            $this->repo_name,
+            trim($path, '/'),
+            $contents,
+            "Auto updates $path",
+            $to_branch,
+            [
+                'name' => $this->account_name,
+                'email' => $this->account_email
+            ]
+        );
+    }
+
+
+    /**
+     * @param string $path
      * @param string $sha
      * @param string $contents
      * @param string $to_branch
      */
-    public function writeFile($path, $sha, $contents, $to_branch)
+    public function updateFile($path, $sha, $contents, $to_branch)
     {
-        $this->logger->info(__METHOD__ . "'$path' '$sha' '$to_branch'");
+        $this->logger->debug(__METHOD__ . "'$path' '$sha' '$to_branch'");
 
-        list($owner, $repo_name) = explode('/', $this->full_name);
-
-        if (!is_null($sha)) {
-            $this->client->api('repo')->contents()->update(
-                $owner,
-                $repo_name,
-                trim($path, '/'),
-                $contents,
-                "Auto updates $path",
-                $sha,
-                $to_branch,
-                [
-                    'name' => $this->account_name,
-                    'email' => $this->account_email
-                ]
-            );
-        } else {
-            $this->client->api('repo')->contents()->create(
-                $owner,
-                $repo_name,
-                trim($path, '/'),
-                $contents,
-                "Auto updates $path",
-                $to_branch,
-                [
-                    'name' => $this->account_name,
-                    'email' => $this->account_email
-                ]
-            );
-        }
+        $this->client->api('repo')->contents()->update(
+            $this->owner,
+            $this->repo_name,
+            trim($path, '/'),
+            $contents,
+            "Auto updates $path",
+            $sha,
+            $to_branch,
+            [
+                'name' => $this->account_name,
+                'email' => $this->account_email
+            ]
+        );
     }
 
     /**
@@ -211,11 +259,9 @@ class GitHubRepository
      */
     public function createPullRequest($title, $base, $head, $body)
     {
-        list($owner, $repo_name) = explode('/', $this->full_name);
-
         $this->client->api('pr')->create(
-            $owner,
-            $repo_name,
+            $this->owner,
+            $this->repo_name,
             [
                 'title' => $title,
                 'base' => $base,
