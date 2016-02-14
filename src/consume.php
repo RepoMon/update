@@ -17,7 +17,7 @@ $updateHandler = function($command) use ($app) {
     try {
         $start = time();
 
-        $app['logger']->notice("Updating " . $command['data']['url']);
+       // $app['logger']->notice("Updating " . $command['data']['url']);
 
         // update the repository specified in command
         $updater = $app['updater_factory']->create(
@@ -42,11 +42,15 @@ $updateHandler = function($command) use ($app) {
         );
 
     } catch (Exception $ex) {
-        $app['logger']->error('Failed to update ' . $command['data']['url'] . ' with ' . $command['data']['dependency_manager'] . ' ' . $ex->getMessage());
+        $app['logger']->error('Failed to update ' . $command['data']['full_name'] . ' ' . $ex->getMessage());
+
+    } finally {
+        // tidy up whatever's been created
+        if ($updater) {
+            $updater->complete();
+        }
     }
 
-    // tidy up whatever's been created
-    $updater->complete();
 };
 
 $app['queue-client']->addEventHandler('command.repository.update', $updateHandler);
