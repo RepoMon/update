@@ -1,0 +1,26 @@
+general:
+  build_dir: .
+
+machine:
+  services:
+    - docker
+
+dependencies:
+  cache_directories:
+    - "~/docker"
+  override:
+    - docker info
+    - if [[ -e ~/docker/image.tar ]]; then docker load --input ~/docker/image.tar; fi
+    - docker build -t timjr/update .
+    - mkdir -p ~/docker; docker save timjr/update > ~/docker/image.tar
+
+test:
+  override:
+    - docker run timjr/update /home/app/bin/phpunit /home/app/Test
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push timjr/update
