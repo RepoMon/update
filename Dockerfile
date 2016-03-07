@@ -19,6 +19,8 @@ RUN apt-get update -qq && \
 RUN curl -sS https://getcomposer.org/installer | php \
   && mv composer.phar /usr/bin/composer
 
+RUN npm install -g npm-shrinkwrap
+
 CMD ["/home/app/run.sh"]
 
 # create the directory to store the checked out repositories
